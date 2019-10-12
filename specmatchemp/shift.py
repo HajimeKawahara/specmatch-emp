@@ -13,8 +13,8 @@ from scipy.stats import sigmaclip
 
 from specmatchemp import spectrum
 from specmatchemp.utils import utils
-
-
+import matplotlib.pyplot as plt
+import sys
 def bootstrap_shift(targ, ref_list, store=None):
     """Shift a target spectrum using a bootstrapping approach.
 
@@ -53,6 +53,7 @@ def bootstrap_shift(targ, ref_list, store=None):
     for i in range(len(ref_list)):
         ref = ref_list[i]
         shift_data = {}
+        print("BB",i,"/",len(ref_list))
         shift(targ_cut, ref, store=shift_data)
 
         # get correlation peaks
@@ -253,7 +254,7 @@ def shift(targ, ref, store=None, lowfilter=20):
             else:
                 lag_data[0, j] = np.nanmean([lag_data[0, j - 1],
                     lag_data[0, j + 1]]) if np.isnan(curr) else curr
-
+        print(lag_data)
     for i in range(s.shape[0]):
         # Restore data from previous loop
         ss = s_rescaled[i]
@@ -262,13 +263,21 @@ def shift(targ, ref, store=None, lowfilter=20):
         start_idx = start_idxs[i]
 
         lags = lag_data[i]
+        print(i,"/",lags,s.shape[0])
         center_pix = center_pix_data[i]
 
         # use robust least squares to fit a line to the shifts
         # (Cauchy loss function)
         p_guess = np.array([0, 0])
+
+        #        print(center_pix, lags)
+
+        ### HK test
+        lags[lags != lags]=np.nanmedian(lags) ##HK test
+                
         fit_res = least_squares(_linear_fit_residuals, p_guess,
                                 args=(center_pix, lags), loss='cauchy')
+            
         fit = fit_res.x
         pix_arr = np.arange(0, len(ss))
         pix_shifted = pix_arr - fit[1] - pix_arr*fit[0]
